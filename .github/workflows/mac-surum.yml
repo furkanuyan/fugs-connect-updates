@@ -1,0 +1,33 @@
+name: Mac sürümü yayınla
+
+# mac/ klasörüne yeni FUGS-Connect-Mac-vX.aar (+ .dmg) itilince "mac-vX" sürümünü açar.
+# Mac'teki FUGS Connect bu sürümleri görüp kendini günceller.
+on:
+  push:
+    branches: [main]
+    paths: ["mac/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  yayinla:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: En yeni sürümü bul
+        id: v
+        run: |
+          F=$(ls mac/FUGS-Connect-Mac-v*.aar | sort -V | tail -1)
+          V=$(basename "$F" .aar | sed 's/FUGS-Connect-Mac-v//')
+          echo "v=$V" >> "$GITHUB_OUTPUT"
+          echo "Sürüm: $V"
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: mac-v${{ steps.v.outputs.v }}
+          name: FUGS Connect Mac v${{ steps.v.outputs.v }}
+          body: "Mac (Apple Silicon). Kurulum: DMG'yi aç, FUGS Connect'i Uygulamalar'a sürükle. Kurulu uygulama kendini günceller."
+          files: |
+            mac/FUGS-Connect-Mac-v${{ steps.v.outputs.v }}.aar
+            mac/FUGS-Connect-Mac-v${{ steps.v.outputs.v }}.dmg
